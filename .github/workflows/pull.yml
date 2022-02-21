@@ -1,10 +1,11 @@
-name: pull-cpu
+name: pull
 
 on:
   pull_request:
   push:
     branches:
       - master
+      - release/*
 
 env:
   IN_CI: 1 # TODO delete in favor of GITHUB_ACTIONS
@@ -143,3 +144,69 @@ jobs:
         { include: [
           { config: "default", shard: 1, num_shards: 1, runner: "linux.2xlarge" },
         ]}
+
+  linux-xenial-cuda11_3-py3_7-gcc7-build:
+    name: linux-xenial-cuda11.3-py3.7-gcc7
+    uses: ./.github/workflows/_linux-build.yml
+    with:
+      build-environment: linux-xenial-cuda11.3-py3.7-gcc7
+      docker-image-name: pytorch-linux-xenial-cuda11.3-cudnn8-py3-gcc7
+
+  linux-xenial-cuda11_3-py3_7-gcc7-test:
+    name: linux-xenial-cuda11.3-py3.7-gcc7
+    uses: ./.github/workflows/_linux-test.yml
+    needs: linux-xenial-cuda11_3-py3_7-gcc7-build
+    with:
+      build-environment: linux-xenial-cuda11.3-py3.7-gcc7
+      docker-image: ${{ needs.linux-xenial-cuda11_3-py3_7-gcc7-build.outputs.docker-image }}
+      test-matrix: |
+        { include: [
+          { config: "default", shard: 1, num_shards: 2, runner: "linux.4xlarge.nvidia.gpu" },
+          { config: "default", shard: 2, num_shards: 2, runner: "linux.4xlarge.nvidia.gpu" },
+          { config: "distributed", shard: 1, num_shards: 1, runner: "linux.8xlarge.nvidia.gpu" },
+        ]}
+
+  # no-ops builds test USE_PER_OPERATOR_HEADERS=0 where ATen/ops is not generated
+  linux-xenial-cuda11_3-py3_7-gcc7-no-ops-build:
+    name: linux-xenial-cuda11.3-py3.7-gcc7-no-ops
+    uses: ./.github/workflows/_linux-build.yml
+    with:
+      build-environment: linux-xenial-cuda11.3-py3.7-gcc7-no-ops
+      docker-image-name: pytorch-linux-xenial-cuda11.3-cudnn8-py3-gcc7
+
+  linux-bionic-rocm4_5-py3_7-build:
+    name: linux-bionic-rocm4.5-py3.7
+    uses: ./.github/workflows/_linux-build.yml
+    with:
+      build-environment: linux-bionic-rocm4.5-py3.7
+      docker-image-name: pytorch-linux-bionic-rocm4.5-py3.7
+
+  linux-bionic-rocm4_5-py3_7-test:
+    name: linux-bionic-rocm4.5-py3.7
+    uses: ./.github/workflows/_rocm-test.yml
+    needs: linux-bionic-rocm4_5-py3_7-build
+    with:
+      build-environment: linux-bionic-rocm4.5-py3.7
+      docker-image: ${{ needs.linux-bionic-rocm4_5-py3_7-build.outputs.docker-image }}
+      test-matrix: |
+        { include: [
+          { config: "default", shard: 1, num_shards: 2, runner: "linux.rocm.gpu" },
+          { config: "default", shard: 2, num_shards: 2, runner: "linux.rocm.gpu" },
+          { config: "distributed", shard: 1, num_shards: 1, runner: "linux.rocm.gpu" },
+        ]}
+
+  linux-xenial-py3-clang5-mobile-build:
+    name: linux-xenial-py3-clang5-mobile-build
+    uses: ./.github/workflows/_linux-build.yml
+    with:
+      build-environment: linux-xenial-py3-clang5-mobile-build
+      docker-image-name: pytorch-linux-xenial-py3-clang5-asan
+      build-generates-artifacts: false
+
+  linux-xenial-py3-clang5-mobile-custom-build-static:
+    name: linux-xenial-py3-clang5-mobile-custom-build-static
+    uses: ./.github/workflows/_linux-build.yml
+    with:
+      build-environment: linux-xenial-py3-clang5-mobile-custom-build-static
+      docker-image-name: pytorch-linux-xenial-py3-clang5-android-ndk-r19c
+      build-generates-artifacts: false
