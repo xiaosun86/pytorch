@@ -1,0 +1,90 @@
+name: periodic
+
+on:
+  schedule:
+    - cron: 45 0,4,8,12,16,20 * * *
+  push:
+    tags:
+      - ciflow/periodic/*
+
+env:
+  IN_CI: 1 # TODO delete in favor of GITHUB_ACTIONS
+  IS_GHA: 1 # TODO delete in favor of GITHUB_ACTIONS
+
+jobs:
+  linux-bionic-cuda11_5-py3_7-gcc7-build:
+    name: linux-bionic-cuda11.5-py3.7-gcc7
+    uses: ./.github/workflows/_linux-build.yml
+    with:
+      build-environment: linux-bionic-cuda11.5-py3.7-gcc7
+      docker-image-name: pytorch-linux-bionic-cuda11.5-cudnn8-py3-gcc7
+
+  linux-bionic-cuda11_5-py3_7-gcc7-test:
+    name: linux-bionic-cuda11.5-py3.7-gcc7
+    uses: ./.github/workflows/_linux-test.yml
+    needs: linux-bionic-cuda11_5-py3_7-gcc7-build
+    with:
+      build-environment: linux-bionic-cuda11.5-py3.7-gcc7
+      docker-image: ${{ needs.linux-bionic-cuda11_5-py3_7-gcc7-build.outputs.docker-image }}
+      test-matrix: |
+        { include: [
+          { config: "default", shard: 1, num_shards: 2, runner: "linux.4xlarge.nvidia.gpu" },
+          { config: "default", shard: 2, num_shards: 2, runner: "linux.4xlarge.nvidia.gpu" },
+        ]}
+
+  libtorch-linux-bionic-cuda11_5-py3_7-gcc7-build:
+    name: libtorch-linux-bionic-cuda11.5-py3.7-gcc7
+    uses: ./.github/workflows/_linux-build.yml
+    with:
+      build-environment: libtorch-linux-bionic-cuda11.5-py3.7-gcc7
+      docker-image-name: pytorch-linux-bionic-cuda11.5-cudnn8-py3-gcc7
+      build-generates-artifacts: false
+
+  linux-xenial-cuda11_1-py3_7-gcc7-debug-build:
+    name: linux-xenial-cuda11.1-py3.7-gcc7-debug
+    uses: ./.github/workflows/_linux-build.yml
+    with:
+      build-environment: linux-xenial-cuda11_1-py3_7-gcc7-debug
+      docker-image: pytorch-linux-xenial-cuda11.1-cudnn8-py3-gcc7
+      build-with-debug: true
+
+  linux-xenial-cuda11_1-py3_7-gcc7-debug-test:
+    name: linux-xenial-cuda11.1-py3.7-gcc7-debug
+    uses: ./.github/workflows/_linux-test.yml
+    needs: linux-xenial-cuda11_1-py3_7-gcc7-debug-build
+    with:
+      build-environment: linux-xenial-cuda11_1-py3_7-gcc7-debug
+      docker-image: ${{ needs.linux-xenial-cuda11_1-py3_7-gcc7-debug-build.outputs.docker-image }}
+      test-matrix: |
+        { include: [
+          { config: "default", shard: 1, num_shards: 2, runner: "linux.4xlarge.nvidia.gpu" },
+          { config: "default", shard: 2, num_shards: 2, runner: "linux.4xlarge.nvidia.gpu" },
+        ]}
+
+  libtorch-linux-xenial-cuda11_1-py3_7-gcc7:
+    name: libtorch-linux-xenial-cuda11.1-py3.7-gcc7
+    uses: ./.github/workflows/_linux-build.yml
+    with:
+      build-environment: libtorch-linux-xenial-cuda11.1-py3.7-gcc7
+      docker-image: pytorch-linux-xenial-cuda11.1-cudnn8-py3-gcc7
+      build-generates-artifacts: false
+
+  linux-xenial-cuda10_2-py3-gcc7-slow-gradcheck-build:
+    name: linux-xenial-cuda10.2-py3-gcc7-slow-gradcheck
+    uses: ./.github/workflows/_linux-build.yml
+    with:
+      build-environment: linux-xenial-cuda10.2-py3-gcc7-slow-gradcheck
+      docker-image-name: pytorch-linux-xenial-cuda10.2-cudnn7-py3-gcc7
+
+  linux-xenial-cuda10_2-py3-gcc7-slow-gradcheck-test:
+    name: linux-xenial-cuda10.2-py3-gcc7-slow-gradcheck
+    uses: ./.github/workflows/_linux-test.yml
+    needs: linux-xenial-cuda10_2-py3-gcc7-slow-gradcheck-build
+    with:
+      build-environment: linux-xenial-cuda10.2-py3-gcc7-slow-gradcheck
+      docker-image: ${{ needs.linux-xenial-cuda10_2-py3-gcc7-slow-gradcheck-build.outputs.docker-image }}
+      test-matrix: |
+        { include: [
+          { config: "default", shard: 1, num_shards: 2, runner: "linux.4xlarge.nvidia.gpu" },
+          { config: "default", shard: 2, num_shards: 2, runner: "linux.4xlarge.nvidia.gpu" },
+        ]}

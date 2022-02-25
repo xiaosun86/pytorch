@@ -1,0 +1,49 @@
+name: nightly
+
+on:
+  schedule:
+    - cron: 0 0 * * *
+  push:
+    tags:
+      - ciflow/nightly/*
+
+env:
+  IN_CI: 1 # TODO delete in favor of GITHUB_ACTIONS
+  IS_GHA: 1 # TODO delete in favor of GITHUB_ACTIONS
+
+jobs:
+  docs-push-build:
+    name: docs-push-build
+    uses: ./.github/workflows/_linux-build.yml
+    with:
+      build-environment: linux-xenial-py3.7-gcc5.4
+      docker-image-name: pytorch-linux-xenial-py3.7-gcc5.4
+
+  docs-push:
+    name: docs push
+    uses: ./.github/workflows/_docs.yml
+    needs: docs-push-build
+    with:
+      build-environment: linux-xenial-py3.7-gcc5.4
+      docker-image: ${{ needs.docs-push-build.outputs.docker-image }}
+      push: true
+
+  linux-xenial-cuda10_2-py3-gcc7-slow-gradcheck-build:
+    name: linux-xenial-cuda10.2-py3-gcc7-slow-gradcheck
+    uses: ./.github/workflows/_linux-build.yml
+    with:
+      build-environment: linux-xenial-cuda10.2-py3-gcc7-slow-gradcheck
+      docker-image-name: pytorch-linux-xenial-cuda10.2-cudnn7-py3-gcc7
+
+  linux-xenial-cuda10_2-py3-gcc7-slow-gradcheck-test:
+    name: linux-xenial-cuda10.2-py3-gcc7-slow-gradcheck
+    uses: ./.github/workflows/_linux-test.yml
+    needs: linux-xenial-cuda10_2-py3-gcc7-slow-gradcheck-build
+    with:
+      build-environment: linux-xenial-cuda10.2-py3-gcc7-slow-gradcheck
+      docker-image: ${{ needs.linux-xenial-cuda10_2-py3-gcc7-slow-gradcheck-build.outputs.docker-image }}
+      test-matrix: |
+        { include: [
+          { config: "default", shard: 1, num_shards: 2, runner: "linux.2xlarge" },
+          { config: "default", shard: 2, num_shards: 2, runner: "linux.2xlarge" },
+        ]}

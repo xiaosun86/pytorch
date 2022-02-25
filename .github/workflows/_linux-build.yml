@@ -13,6 +13,10 @@ on:
         required: false
         type: boolean
         default: true
+      build-with-debug:
+        required: false
+        type: boolean
+        default: false
     outputs:
       docker-image:
         value: ${{ jobs.build.outputs.docker-image }}
@@ -76,6 +80,7 @@ jobs:
           PR_LABELS: ${{ toJson(github.event.pull_request.labels.*.name) }}
           TORCH_CUDA_ARCH_LIST: 5.2
           DOCKER_IMAGE: ${{ steps.calculate-docker-image.outputs.docker-image }}
+          DEBUG: ${{ inputs.build-with-debug && '1' || '0' }}
         run: |
           # detached container should get cleaned up by teardown_ec2_linux
           container_name=$(docker run \
