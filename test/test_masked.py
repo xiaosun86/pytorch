@@ -216,6 +216,9 @@ class mask_layouts(_TestParametrizer):
             elif layout == torch.sparse_csr:
                 if not op.supports_sparse_csr:
                     raise unittest.SkipTest(f"{op.name} does not support inputs with {layout_name} layout")
+                if device != 'cpu':
+                    raise unittest.SkipTest(
+                        f"masked reduction on a sparse CSR tensor using {device} storage is not yet implemented")
                 sample_inputs_func = op.sample_inputs_sparse_csr
             else:
                 raise NotImplementedError(f'{layout}')
