@@ -35,11 +35,14 @@ jobs:
         run: |
           retry () { "$@"  || (sleep 1 && "$@") || (sleep 2 && "$@") }
           retry docker pull ${{ inputs.docker-image }}
-      - name: Install nvidia driver, nvidia-docker runtime, set GPU_FLAG
-        if: contains(inputs.build-environment, 'cuda') && !contains(matrix.config, 'nogpu')
-        run: |
-          bash .github/scripts/install_nvidia_utils_linux.sh
-          echo "GPU_FLAG=--gpus all" >> "${GITHUB_ENV}"
+      - uses: nick-fields/retry@71062288b76e2b6214ebde0e673ce0de1755740a
+        name: Install nvidia driver, nvidia-docker runtime, set GPU_FLAG
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          command: >-
+            pushd pytorch && bash .github/scripts/install_nvidia_utils_linux.sh && \
+            echo "GPU_FLAG=--gpus all" >> "${GITHUB_ENV}" && popd
       - name: Determine shm-size
         id: shm
         run: |

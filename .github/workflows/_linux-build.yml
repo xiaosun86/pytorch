@@ -32,7 +32,7 @@ jobs:
       - name: Clean workspace
         run: |
           echo "${GITHUB_WORKSPACE}"
-          rm -rf "${GITHUB_WORKSPACE}"
+          sudo rm -rf "${GITHUB_WORKSPACE}"
           mkdir "${GITHUB_WORKSPACE}"
 
       - name: Checkout PyTorch
@@ -127,6 +127,7 @@ jobs:
           python3 -m tools.stats.upload_binary_size_to_scuba || exit 0
 
       - name: Chown workspace
+        if: always()
         env:
           # TODO duplicated
           ALPINE_IMAGE: "308535385114.dkr.ecr.us-east-1.amazonaws.com/tool/alpine"
